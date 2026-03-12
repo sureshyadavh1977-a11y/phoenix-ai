@@ -966,7 +966,128 @@
     flex-shrink: 0;
   }
   .mc-online-dot.offline { background: var(--sharingan); box-shadow: 0 0 8px var(--sharingan); animation: none; }
+
+  /* GameBridge Panel */
+  .gb-header {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #101e22, #0a1520);
+    border: 1px solid #0db9f233;
+    border-radius: 12px 12px 0 0;
+    font-family: 'Cinzel', serif;
+  }
+  .gb-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #7c3aed, #0db9f2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 900; color: white;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .gb-title { font-size: 0.85rem; color: #0db9f2; letter-spacing: 0.15em; }
+  .gb-sub { font-size: 0.6rem; color: var(--text-muted); margin-top: 2px; }
+
+  .gb-tabs {
+    display: flex;
+    background: #0a1520;
+    border: 1px solid #0db9f222;
+    border-top: none;
+  }
+  .gb-tab {
+    flex: 1;
+    padding: 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-align: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-family: 'Cinzel', serif;
+  }
+  .gb-tab.active { color: #0db9f2; border-bottom: 2px solid #0db9f2; background: #0db9f211; }
+
+  .gb-content {
+    background: var(--card);
+    border: 1px solid #0db9f222;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    min-height: 300px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .gb-card {
+    background: #0a1520;
+    border: 1px solid #0db9f222;
+    border-radius: 10px;
+    padding: 12px 16px;
+    animation: fadeSlide 0.3s ease;
+    transition: border-color 0.2s;
+  }
+  .gb-card:hover { border-color: #0db9f244; }
+
+  .gb-card-title { font-size: 0.78rem; color: #e2d9f3; margin-bottom: 4px; }
+  .gb-card-sub { font-size: 0.65rem; color: var(--text-muted); }
+  .gb-card-meta { font-size: 0.6rem; color: var(--text-dim); margin-top: 6px; }
+
+  .gb-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 50px;
+    font-size: 0.58rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+  .gb-badge.live { background: #ef444422; color: #ef4444; border: 1px solid #ef444433; }
+  .gb-badge.open { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e33; }
+  .gb-badge.ended { background: #ffffff11; color: #666; border: 1px solid #ffffff11; }
+
+  .gb-empty { text-align: center; padding: 40px; color: var(--text-dim); font-size: 0.72rem; }
+  .gb-loading { text-align: center; padding: 30px; color: #0db9f2; font-size: 0.72rem; letter-spacing: 0.1em; }
+
+  .btn-gb-refresh {
+    align-self: flex-end;
+    background: #0db9f222;
+    border: 1px solid #0db9f244;
+    color: #0db9f2;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-gb-refresh:hover { background: #0db9f233; }
 </style>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, limit }
+  from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const gbConfig = {
+  apiKey: "AIzaSyDRGzACcLRhH5p5CqH-S_lW99hIy8K9ijY",
+  authDomain: "gamebridge-b2a63.firebaseapp.com",
+  projectId: "gamebridge-b2a63",
+  storageBucket: "gamebridge-b2a63.firebasestorage.app",
+  appId: "1:368521965659:web:d9de05dd3b3960ae660f7e"
+};
+
+const gbApp = initializeApp(gbConfig, 'gamebridge');
+const gbDb = getFirestore(gbApp);
+window.gbDb = gbDb;
+window.gbFirestore = { collection, onSnapshot, query, orderBy, limit };
+window.gbLoaded = true;
+window.dispatchEvent(new Event('gb-ready'));
+</script>
 </head>
 <body>
 
@@ -1012,6 +1133,7 @@
     <button class="tab active" onclick="switchTab('chat', this)">⚡ Chat</button>
     <button class="tab" onclick="switchTab('tasks', this)">📋 Tasks</button>
     <button class="tab" onclick="switchTab('notes', this)">📝 Notes</button>
+    <button class="tab" onclick="switchTab('gamebridge', this)">🎮 GameBridge</button>
     <button class="tab" onclick="switchTab('minecraft', this)">⛏ Server</button>
     <button class="tab" onclick="switchTab('spotify', this)">🎵 Spotify</button>
     <button class="tab" onclick="switchTab('settings', this)">⚙ Settings</button>
@@ -1063,6 +1185,26 @@
     </div>
   </div>
 
+
+  <!-- GameBridge Panel -->
+  <div id="panel-gamebridge" class="panel">
+    <div class="gb-header">
+      <div class="gb-logo">GB</div>
+      <div>
+        <div class="gb-title">GAMEBRIDGE</div>
+        <div class="gb-sub">Elite Gaming Hub — Live Data</div>
+      </div>
+      <button class="btn-gb-refresh" onclick="gbLoad(currentGbTab)" style="margin-left:auto">↻ REFRESH</button>
+    </div>
+    <div class="gb-tabs">
+      <button class="gb-tab active" onclick="gbSwitchTab('tournaments', this)">🏆 Tournaments</button>
+      <button class="gb-tab" onclick="gbSwitchTab('squads', this)">👥 Squads</button>
+      <button class="gb-tab" onclick="gbSwitchTab('pulse', this)">⚡ Pulse</button>
+    </div>
+    <div class="gb-content" id="gb-content">
+      <div class="gb-loading">Connecting to GameBridge...</div>
+    </div>
+  </div>
 
   <!-- Minecraft Panel -->
   <div id="panel-minecraft" class="panel">
@@ -1166,8 +1308,8 @@
     <div class="settings-section" style="margin-top:14px">
       <div class="settings-header">Coming Soon</div>
       <div class="settings-row">
-        <div class="settings-label" style="color:var(--text-muted)">🎮 GameBridge Integration</div>
-        <span style="font-size:0.62rem;color:var(--purple);letter-spacing:0.1em">PHASE 2</span>
+        <div class="settings-label" style="color:#0db9f2">🎮 GameBridge Integration</div>
+        <span style="font-size:0.62rem;color:#0db9f2;letter-spacing:0.1em">LIVE ✓</span>
       </div>
       <div class="settings-row">
         <div class="settings-label" style="color:#1db954">🎵 Spotify Search</div>
@@ -1207,6 +1349,108 @@ let recognition = null;
 let isSpeaking = false;
 
 
+
+
+// ===== GAMEBRIDGE INTEGRATION =====
+let currentGbTab = 'tournaments';
+let gbReady = false;
+
+window.addEventListener('gb-ready', () => { gbReady = true; gbLoad('tournaments'); });
+// If already loaded
+if (window.gbLoaded) { gbReady = true; setTimeout(() => gbLoad('tournaments'), 500); }
+
+function gbSwitchTab(tab, el) {
+  currentGbTab = tab;
+  document.querySelectorAll('.gb-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  gbLoad(tab);
+}
+
+function gbLoad(tab) {
+  const content = document.getElementById('gb-content');
+  if (!content) return;
+  if (!gbReady || !window.gbDb) {
+    content.innerHTML = '<div class="gb-loading">⏳ Connecting to Firebase...</div>';
+    setTimeout(() => gbLoad(tab), 1000);
+    return;
+  }
+  content.innerHTML = '<div class="gb-loading">Loading...</div>';
+  const { collection, onSnapshot, query, orderBy, limit } = window.gbFirestore;
+  const db = window.gbDb;
+
+  if (tab === 'tournaments') {
+    const q = query(collection(db, 'tournaments'), orderBy('createdAt', 'desc'), limit(10));
+    onSnapshot(q, (snap) => {
+      if (snap.empty) { content.innerHTML = '<div class="gb-empty">🏆 No tournaments yet</div>'; return; }
+      content.innerHTML = '';
+      snap.forEach(d => {
+        const t = d.data();
+        const reg = t.registeredPlayers?.length || 0;
+        const max = t.maxPlayers || 16;
+        const statusClass = t.status === 'live' ? 'live' : t.status === 'upcoming' ? 'open' : 'ended';
+        const statusText = t.status === 'live' ? 'LIVE' : t.status === 'upcoming' ? 'OPEN' : 'ENDED';
+        const gameEmoji = {'Rocket League':'🚀','Free Fire':'🔫','Minecraft':'⛏️','BGMI':'🏆','Valorant':'⚔️'}[t.game] || '🎮';
+        const div = document.createElement('div');
+        div.className = 'gb-card';
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:1.2rem">${gameEmoji}</span>
+            <span class="gb-card-title">${t.name}</span>
+            <span class="gb-badge ${statusClass}" style="margin-left:auto">${statusText}</span>
+          </div>
+          <div class="gb-card-sub">${t.game} · ${t.format} · ${t.prize ? '₹'+t.prize+' Prize' : 'Free'}</div>
+          <div style="margin-top:8px;height:4px;background:#ffffff11;border-radius:4px;overflow:hidden">
+            <div style="height:4px;background:linear-gradient(90deg,#0db9f2,#7c3aed);width:${Math.min(100,reg/max*100)}%;border-radius:4px"></div>
+          </div>
+          <div class="gb-card-meta">${reg}/${max} players registered</div>
+        `;
+        content.appendChild(div);
+      });
+    }, () => { content.innerHTML = '<div class="gb-empty">⚠ Could not load tournaments</div>'; });
+
+  } else if (tab === 'squads') {
+    const q = query(collection(db, 'squads'), orderBy('createdAt', 'desc'), limit(10));
+    onSnapshot(q, (snap) => {
+      if (snap.empty) { content.innerHTML = '<div class="gb-empty">👥 No squads found</div>'; return; }
+      content.innerHTML = '';
+      snap.forEach(d => {
+        const s = d.data();
+        const members = s.members?.length || 1;
+        const div = document.createElement('div');
+        div.className = 'gb-card';
+        div.innerHTML = `
+          <div class="gb-card-title">👥 ${s.name || 'Unnamed Squad'}</div>
+          <div class="gb-card-sub">${s.game || 'Any game'} · ${members} member${members !== 1 ? 's' : ''} · ${s.rank || 'Any rank'}</div>
+          <div class="gb-card-meta">Leader: ${s.leaderName || 'Unknown'}</div>
+        `;
+        content.appendChild(div);
+      });
+    }, () => { content.innerHTML = '<div class="gb-empty">⚠ Could not load squads</div>'; });
+
+  } else if (tab === 'pulse') {
+    const q = query(collection(db, 'pulse'), orderBy('createdAt', 'desc'), limit(10));
+    onSnapshot(q, (snap) => {
+      if (snap.empty) { content.innerHTML = '<div class="gb-empty">⚡ No pulse posts yet</div>'; return; }
+      content.innerHTML = '';
+      snap.forEach(d => {
+        const p = d.data();
+        const time = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'recently';
+        const div = document.createElement('div');
+        div.className = 'gb-card';
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#0db9f222;border:1px solid #0db9f244;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#0db9f2;flex-shrink:0">${(p.userName||'?').charAt(0).toUpperCase()}</div>
+            <span class="gb-card-sub" style="font-weight:bold;color:#e2d9f3">${p.userName || 'Player'}</span>
+            <span class="gb-card-meta" style="margin-left:auto;margin-top:0">${time}</span>
+          </div>
+          <div class="gb-card-sub" style="color:#c4b5d4">${p.text || ''}</div>
+          ${p.likes ? `<div class="gb-card-meta">❤️ ${p.likes.length || 0} likes</div>` : ''}
+        `;
+        content.appendChild(div);
+      });
+    }, () => { content.innerHTML = '<div class="gb-empty">⚠ Could not load pulse</div>'; });
+  }
+}
 
 // ===== MINECRAFT SERVER =====
 const MC_SERVER = 'dangerva.bedrock.minekeep.gg';
